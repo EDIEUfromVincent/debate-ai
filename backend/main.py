@@ -31,3 +31,4 @@ app.include_router(debate_router, prefix="/api")
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
