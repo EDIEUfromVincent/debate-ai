@@ -27,16 +27,16 @@ _SYSTEM_PROMPT = """\
 
 # phase별 한국어 이름과 발화자·시간 정보
 _PHASE_META: dict[str, dict] = {
-    "phase_1_pro_1":          {"name": "주장 펼치기",   "speaker": "찬성",  "sec": 120},
-    "phase_1_con_1":          {"name": "주장 펼치기",   "speaker": "반대",  "sec": 120},
-    "consultation_1":         {"name": "팀 협의",       "speaker": "양팀",  "sec": 120},
-    "phase_2_con_2_rebuttal": {"name": "반론·질문",     "speaker": "반대",  "sec": 90},
-    "phase_2_pro_defense":    {"name": "반박·답변",     "speaker": "찬성",  "sec": 90},
-    "phase_2_pro_2_rebuttal": {"name": "반론·질문",     "speaker": "찬성",  "sec": 90},
-    "phase_2_con_defense":    {"name": "반박·답변",     "speaker": "반대",  "sec": 90},
-    "consultation_2":         {"name": "팀 협의",       "speaker": "양팀",  "sec": 120},
-    "phase_3_con_3":          {"name": "주장 다지기",   "speaker": "반대",  "sec": 120},
-    "phase_3_pro_3":          {"name": "주장 다지기",   "speaker": "찬성",  "sec": 120},
+    "phase_1_pro_1":          {"name": "주장 펼치기",   "speaker": "찬성",  "sec": 0},
+    "phase_1_con_1":          {"name": "주장 펼치기",   "speaker": "반대",  "sec": 0},
+    "consultation_1":         {"name": "생각 정리",     "speaker": "각자",  "sec": 0},
+    "phase_2_con_2_rebuttal": {"name": "반론·질문",     "speaker": "반대",  "sec": 0},
+    "phase_2_pro_defense":    {"name": "반박·답변",     "speaker": "찬성",  "sec": 0},
+    "phase_2_pro_2_rebuttal": {"name": "반론·질문",     "speaker": "찬성",  "sec": 0},
+    "phase_2_con_defense":    {"name": "반박·답변",     "speaker": "반대",  "sec": 0},
+    "consultation_2":         {"name": "생각 정리",     "speaker": "각자",  "sec": 0},
+    "phase_3_con_3":          {"name": "주장 다지기",   "speaker": "반대",  "sec": 0},
+    "phase_3_pro_3":          {"name": "주장 다지기",   "speaker": "찬성",  "sec": 0},
     "judging":                {"name": "판정 중",       "speaker": "AI",    "sec": 30},
 }
 
@@ -75,16 +75,20 @@ class MCAgent(AgentBase):
         meta = _PHASE_META.get(phase_id, {})
         phase_name = meta.get("name", phase_id)
         speaker = meta.get("speaker", "")
-        sec = meta.get("sec", 0)
-        minutes = sec // 60
-        secs = sec % 60
-        time_str = f"{minutes}분" if secs == 0 else f"{minutes}분 {secs}초" if minutes else f"{secs}초"
 
         if event == MCEvent.PHASE_START:
-            prompt = (
-                f"다음 단계 안내: [{phase_name}] — {speaker} 차례, 발언 시간 {time_str}. "
-                "화자와 시간을 포함한 진행 안내 메시지를 1~2문장으로 말하세요."
-            )
+            if "consultation" in phase_id:
+                prompt = (
+                    f"[{phase_name}] 단계입니다. "
+                    "각자 잠깐 생각을 정리하는 시간이에요. "
+                    "'팀', '여러분', '먼저 찬성부터' 같은 말 절대 쓰지 마세요. "
+                    "1문장으로만 안내하세요."
+                )
+            else:
+                prompt = (
+                    f"다음 단계 안내: [{phase_name}] — {speaker} 차례. "
+                    "시간 제한 언급하지 말고, 화자와 단계만 안내하는 메시지를 1~2문장으로 말하세요."
+                )
         elif event == MCEvent.NO_RESPONSE:
             prompt = (
                 "학생이 10초간 응답하지 않았습니다. "
