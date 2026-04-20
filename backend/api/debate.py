@@ -129,10 +129,14 @@ def _run_ai_turns(sess: SessionState) -> list[dict[str, Any]]:
             break
 
         if _is_ai_opponent_turn(sess):
+            # 학생의 직전 발화를 AI에게 전달
+            student_turns = [t for t in sess.turns if t["speaker"] == sess.student_side]
+            last_student = student_turns[-1]["text"] if student_turns else ""
             text = sess.opponent.speak(
                 phase_id=_phase_id(sess),
                 topic=sess.topic,
                 prior_turns=sess.turns,
+                student_last=last_student,
             )
             sess.add_turn(_phase_id(sess), sess.ai_side, text)
             messages.append({
