@@ -131,8 +131,11 @@ def _run_ai_turns(sess: SessionState) -> list[dict[str, Any]]:
         if _is_ai_opponent_turn(sess):
             student_turns = [t for t in sess.turns if t["speaker"] == sess.student_side]
             phase_now = _phase_id(sess)
-            # pro_2_rebuttal: AI가 학생의 phase_1 주장을 반박 → phase_1 발화 사용
-            if "pro_2_rebuttal" in phase_now or "con_2_rebuttal" in phase_now:
+            if "phase_3" in phase_now:
+                # 주장 다지기: 자기 근거 정리만 — 학생 발화 전달 안 함
+                last_student = ""
+            elif "pro_2_rebuttal" in phase_now or "con_2_rebuttal" in phase_now:
+                # AI가 학생의 phase_1 주장을 반박 → phase_1 발화 사용
                 phase1_key = "con_1" if sess.student_side == "con" else "pro_1"
                 phase1_turns = [t for t in sess.turns if t["speaker"] == sess.student_side and phase1_key in t.get("phase", "")]
                 last_student = phase1_turns[-1]["text"] if phase1_turns else (student_turns[-1]["text"] if student_turns else "")
