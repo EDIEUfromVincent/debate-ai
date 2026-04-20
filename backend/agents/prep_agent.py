@@ -80,11 +80,12 @@ class PrepAgent(AgentBase):
             (ai_response, is_done, PrepResult | None)
             is_done=True이면 PrepResult가 채워짐.
         """
-        # 건너뛰기 즉시 종료
+        # 건너뛰기 즉시 종료 — 이전 발화에서 입장 추론
         if _SKIP_KEYWORD in student_input:
+            stance = _infer_stance(turns or [], student_input)
             result = PrepResult(
                 topic=topic,
-                stance="",
+                stance=stance,
                 grounds=["", "", ""],
                 sources=["", "", ""],
                 skipped=True,
@@ -126,6 +127,16 @@ class PrepAgent(AgentBase):
             contents.append({"role": "user",  "parts": [{"text": student_msg}]})
             contents.append({"role": "model", "parts": [{"text": ai_msg}]})
         return contents
+
+
+def _infer_stance(turns: list[tuple[str, str]], last_input: str) -> str:
+    """이전 대화와 현재 입력에서 찬성/반대 키워드를 찾아 반환."""
+    all_text = " ".join(s for s, _ in turns) + " " + last_input
+    if re.search(r"반대|반대측|con", all_text, re.IGNORECASE):
+        return "반대"
+    if re.search(r"찬성|찬성측|pro", all_text, re.IGNORECASE):
+        return "찬성"
+    return ""
 
 
 def _parse_result(topic: str, ai_text: str) -> PrepResult:

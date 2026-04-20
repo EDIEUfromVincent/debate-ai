@@ -1,5 +1,6 @@
 """
 POST /api/prep/chat — Prep Agent 단일 턴 호출
+POST /api/prep/auto — 입장만 주면 근거+자료 자동 생성
 """
 from __future__ import annotations
 
@@ -9,9 +10,29 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from agents.prep_agent import PrepAgent, PrepResult
+from llm.agent_base import AgentBase
 
 router = APIRouter()
 _agent = PrepAgent()
+
+
+class _AutoAgent(AgentBase):
+    model = "gemini-2.5-flash-lite"
+    thinking_budget = 0
+    max_tokens = 600
+    temperature = 0.7
+
+    def build_system_prompt(self) -> str:
+        return (
+            "초등 6학년 토론 수업용 준비물 생성기입니다. "
+            "주제와 입장을 받으면 근거 3가지와 각 근거를 뒷받침하는 자료 3가지를 생성하세요. "
+            "초등 6학년 수준의 언어로, 실제 출처(기사명·기관명·책명 등)를 구체적으로 포함하세요. "
+            "마크다운 금지. 반드시 마지막 줄에만:\n"
+            "RESULT_JSON:{\"입장\":\"...\",\"근거\":[\"...\",\"...\",\"...\"],\"자료\":[\"...\",\"...\",\"...\"]}"
+        )
+
+
+_auto_agent = _AutoAgent()
 
 
 class PrepChatRequest(BaseModel):
@@ -45,3 +66,24 @@ async def prep_chat(req: PrepChatRequest) -> PrepChatResponse:
         }
 
     return PrepChatResponse(ai_response=ai_response, done=done, result=result_dict)
+
+
+class PrepAutoRequest(BaseModel):
+    topic: str
+    stance: str   # "찬성" | "반대"
+
+
+@router.post("/prep/auto")
+async def prep_auto(req: PrepAutoRequest) -> dict[str, Any]:
+    prompt = f"주제: {req.topic}\n입장: {req.stance}\n\n이 입장에 맞는 근거 3가지와 자료 3가지를 생성해줘."
+    raw = str(_auto_agent.call(prompt))
+    from agents.prep_agent import _parse_result
+    result = _parse_result(req.topic, raw)
+    result.stance = req.stance  # 항상 요청한 stance로 덮어쓰기
+    return {
+        "topic":   result.topic,
+        "stance":  result.stance,
+        "grounds": result.grounds,
+        "sources": result.sources,
+        "skipped": False,
+    }
