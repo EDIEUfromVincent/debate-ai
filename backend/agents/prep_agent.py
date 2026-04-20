@@ -32,17 +32,11 @@ _SYSTEM_PROMPT = """\
    경고 후에는 이전 질문을 반복하지 말고 한 문장으로 대기하라. 절대 친절하게 달래지 말 것.
 
 [출력 형식]
-학생의 최종 준비물 = {주장, 근거[0], 근거[1], 근거[2], 자료[0], 자료[1], 자료[2]}
-이 7개 필드가 다 채워지면 반드시 다음 JSON 블록을 응답 마지막에 포함하고 "준비 완료. 토론을 시작할 수 있어요." 메시지로 마무리하라:
-
-```json
-{
-  "주장": "...",
-  "입장": "찬성" 또는 "반대",
-  "근거": ["...", "...", "..."],
-  "자료": ["...", "...", "..."]
-}
-```
+- 항상 짧고 자연스러운 대화체로만 응답하라. 마크다운, 기호(*, **, ```, #), JSON 절대 사용 금지.
+- 학생의 최종 준비물 = {주장, 근거[0], 근거[1], 근거[2], 자료[0], 자료[1], 자료[2]}
+- 이 7개 필드가 다 채워지면 응답 마지막 줄에 아래 한 줄만 추가하라 (다른 설명 없이):
+RESULT_JSON:{"입장":"찬성","근거":["...","...","..."],"자료":["...","...","..."]}
+- 그 위에는 "준비 완료. 토론을 시작할 수 있어요!" 한 문장만 쓰고 끝내라.
 """
 
 _READY_SIGNAL = "준비 완료"
@@ -109,7 +103,10 @@ class PrepAgent(AgentBase):
                 topic, turns or [], student_input, ai_response
             )
 
-        return ai_response, is_done, result
+        # RESULT_JSON 줄은 UI에 보내지 않음
+        clean_response = re.sub(r"\nRESULT_JSON:\{.*\}", "", ai_response).strip()
+
+        return clean_response, is_done, result
 
     # ── 내부 헬퍼 ────────────────────────────────────────────────────────────
 
@@ -132,8 +129,8 @@ class PrepAgent(AgentBase):
 
 
 def _parse_result(topic: str, ai_text: str) -> PrepResult:
-    """AI 응답에서 JSON 블록을 추출해 PrepResult로 변환."""
-    match = re.search(r"```json\s*(\{.*?\})\s*```", ai_text, re.DOTALL)
+    """AI 응답에서 RESULT_JSON: 줄을 추출해 PrepResult로 변환."""
+    match = re.search(r"RESULT_JSON:(\{.*\})", ai_text)
     if match:
         try:
             data = json.loads(match.group(1))
@@ -145,7 +142,6 @@ def _parse_result(topic: str, ai_text: str) -> PrepResult:
             )
         except json.JSONDecodeError:
             pass
-    # JSON 파싱 실패 시 빈 결과 반환 (대화는 계속 가능)
     return PrepResult(topic=topic, stance="", grounds=["", "", ""], sources=["", "", ""])
 
 
