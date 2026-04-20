@@ -244,7 +244,9 @@ export default function DebateStage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionRef.current, student_input: text, player_side: playerSide }),
       });
-      applyResponse(await res.json());
+      const data = await res.json();
+      if (!res.ok) { setIsStudentTurn(true); return; }
+      applyResponse(data);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -278,7 +280,9 @@ export default function DebateStage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionRef.current }),
       });
-      applyResponse(await res.json());
+      const data = await res.json();
+      if (!res.ok) { setAwaitingAck(true); return; }
+      applyResponse(data);
     } finally {
       setLoading(false);
     }
