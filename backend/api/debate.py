@@ -49,6 +49,7 @@ class SessionState:
         self.pending_transition: bool = False       # AI 발화 후 ack 대기
         self.guest_joined: bool = False             # 1v1: 게스트 접속 여부
         self.ready_sides: set[str] = set()          # 1v1: 준비 완료한 측
+        self.prep_done_sides: set[str] = set()      # 1v1: prep 완료한 측
 
     def add_turn(self, phase_id: str, speaker: str, text: str) -> None:
         self.turns.append({"phase": phase_id, "speaker": speaker, "text": text})
@@ -353,6 +354,16 @@ async def debate_join(req: JoinRequest) -> dict[str, Any]:
     return {"ok": True}
 
 
+@router.post("/debate/prep-done")
+async def debate_prep_done(req: JoinRequest) -> dict[str, Any]:
+    sess = _sessions.get(req.session_id)
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+    sess.prep_done_sides.add(req.side)
+    both = len(sess.prep_done_sides) >= 2
+    return {"ok": True, "both_prep_done": both, "prep_done_sides": list(sess.prep_done_sides)}
+
+
 @router.post("/debate/ready")
 async def debate_ready(req: JoinRequest) -> dict[str, Any]:
     sess = _sessions.get(req.session_id)
@@ -382,7 +393,9 @@ async def debate_status(session_id: str) -> dict[str, Any]:
         "ended":           sess.sm.is_finished(),
         "judge_result":    sess.judge_result,
         "duration_sec":    _safe_duration(sess),
-        "guest_joined":    sess.guest_joined,
-        "ready_sides":     list(sess.ready_sides),
-        "both_ready":      len(sess.ready_sides) >= 2,
+        "guest_joined":     sess.guest_joined,
+        "ready_sides":      list(sess.ready_sides),
+        "both_ready":       len(sess.ready_sides) >= 2,
+        "prep_done_sides":  list(sess.prep_done_sides),
+        "both_prep_done":   len(sess.prep_done_sides) >= 2,
     }
