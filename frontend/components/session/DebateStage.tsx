@@ -394,6 +394,16 @@ export default function DebateStage({
             </Button>
           ) : (
             <div className="flex flex-col gap-2 w-full">
+              {isStudentTurn && REBUTTAL_PHASES.has(phase) && (
+                <button
+                  onClick={handleSkipToClosing}
+                  disabled={loading}
+                  className="w-full rounded-xl border border-orange-300 bg-orange-50 text-orange-700
+                             font-semibold py-2 text-sm hover:bg-orange-100 disabled:opacity-40 transition-colors"
+                >
+                  ② 이제 정리하기 →
+                </button>
+              )}
               <div className="flex gap-2 items-center">
                 <input
                   ref={inputRef}
@@ -423,16 +433,6 @@ export default function DebateStage({
                   발언
                 </Button>
               </div>
-              {isStudentTurn && REBUTTAL_PHASES.has(phase) && (
-                <button
-                  onClick={handleSkipToClosing}
-                  disabled={loading}
-                  className="w-full rounded-xl border border-orange-300 bg-orange-50 text-orange-700
-                             font-semibold py-2 text-sm hover:bg-orange-100 disabled:opacity-40 transition-colors"
-                >
-                  ② 이제 정리하기 →
-                </button>
-              )}
             </div>
           )}
         </div>
