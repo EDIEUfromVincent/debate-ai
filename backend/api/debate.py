@@ -344,6 +344,37 @@ async def debate_timeout(req: TimeoutRequest) -> TurnResponse:
     return _build_turn_response(sess, [], mc_next, ai_messages, False)
 
 
+class SkipRequest(BaseModel):
+    session_id: str
+
+
+@router.post("/debate/skip-rebuttal")
+async def debate_skip_rebuttal(req: SkipRequest) -> TurnResponse:
+    """반론 단계에서 주장 다지기로 바로 이동."""
+    sess = _sessions.get(req.session_id)
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    if sess.pending_transition:
+        sess.pending_transition = False
+        try:
+            sess.sm.send(Event.COMPLETE)
+        except InvalidTransitionError:
+            pass
+
+    try:
+        sess.sm.send(Event.SKIP)
+    except InvalidTransitionError:
+        raise HTTPException(status_code=400, detail="Cannot skip from current state")
+
+    ai_messages = _run_ai_turns(sess)
+    mc_next: str | None = None
+    if not sess.sm.is_finished() and not sess.pending_transition:
+        mc_next = _mc.announce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
+
+    return _build_turn_response(sess, [], mc_next, ai_messages)
+
+
 class JoinRequest(BaseModel):
     session_id: str
     side: str   # "pro" | "con"

@@ -67,22 +67,26 @@ _TRANSITIONS: dict[State, dict[Event, State | None]] = {
     State.PHASE_2_CON_2_REBUTTAL: {
         Event.TIMEOUT:  State.PHASE_2_PRO_DEFENSE,
         Event.COMPLETE: State.PHASE_2_PRO_DEFENSE,
+        Event.SKIP:     State.PHASE_3_CON_3,   # 정리로 바로 이동
     },
     State.PHASE_2_PRO_DEFENSE: {
         Event.TIMEOUT:          State.PHASE_2_PRO_2_REBUTTAL,
         Event.COMPLETE:         State.PHASE_2_PRO_2_REBUTTAL,
-        Event.NO_RESPONSE_10S:  None,   # 상태 유지, reroute_pending
+        Event.NO_RESPONSE_10S:  None,
         Event.EARLY_COMPLETE:   State.PHASE_2_PRO_2_REBUTTAL,
+        Event.SKIP:             State.PHASE_3_CON_3,
     },
     State.PHASE_2_PRO_2_REBUTTAL: {
         Event.TIMEOUT:  State.PHASE_2_CON_DEFENSE,
         Event.COMPLETE: State.PHASE_2_CON_DEFENSE,
+        Event.SKIP:     State.PHASE_3_CON_3,
     },
     State.PHASE_2_CON_DEFENSE: {
         Event.TIMEOUT:          State.CONSULTATION_2,
         Event.COMPLETE:         State.CONSULTATION_2,
         Event.NO_RESPONSE_10S:  None,
         Event.EARLY_COMPLETE:   State.CONSULTATION_2,
+        Event.SKIP:             State.PHASE_3_CON_3,
     },
     State.CONSULTATION_2: {
         Event.TIMEOUT: State.PHASE_3_CON_3,
