@@ -21,15 +21,20 @@ class _AutoAgent(AgentBase):
     thinking_budget = 0
     max_tokens = 600
     temperature = 0.7
+    response_schema = {
+        "type": "object",
+        "properties": {
+            "근거": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 3},
+            "자료": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 3},
+        },
+        "required": ["근거", "자료"],
+    }
 
     def build_system_prompt(self) -> str:
         return (
             "초등 6학년 토론 수업용 준비물 생성기입니다. "
             "주제와 입장을 받으면 근거 3가지와 각 근거를 뒷받침하는 자료 3가지를 생성하세요. "
-            "초등 6학년 수준의 언어로, 실제 출처(기사명·기관명·책명 등)를 구체적으로 포함하세요. "
-            "반드시 아래 JSON만 출력하고 다른 텍스트는 절대 쓰지 마세요:\n"
-            "{\"근거\":[\"근거1 한 문장\",\"근거2 한 문장\",\"근거3 한 문장\"],"
-            "\"자료\":[\"자료1 출처명\",\"자료2 출처명\",\"자료3 출처명\"]}"
+            "초등 6학년 수준의 언어로, 실제 출처(기사명·기관명·책명 등)를 구체적으로 포함하세요."
         )
 
 
@@ -76,20 +81,10 @@ class PrepAutoRequest(BaseModel):
 
 @router.post("/prep/auto")
 async def prep_auto(req: PrepAutoRequest) -> dict[str, Any]:
-    import json, re
     prompt = f"주제: {req.topic}\n입장: {req.stance}\n\n이 입장에 맞는 근거 3가지와 자료 3가지를 생성해줘."
-    raw = str(_auto_agent.call(prompt))
-    # JSON 블록 추출 시도
-    grounds, sources = ["", "", ""], ["", "", ""]
-    try:
-        m = re.search(r"\{.*\}", raw, re.DOTALL)
-        if m:
-            data = json.loads(m.group())
-            grounds = (data.get("근거") or [])[:3] + [""] * 3
-            sources = (data.get("자료") or [])[:3] + [""] * 3
-            grounds, sources = grounds[:3], sources[:3]
-    except Exception:
-        pass
+    data = _auto_agent.call(prompt)  # response_schema → dict 반환
+    grounds = (data.get("근거") or ["", "", ""])[:3]
+    sources = (data.get("자료") or ["", "", ""])[:3]
     return {
         "topic":   req.topic,
         "stance":  req.stance,
