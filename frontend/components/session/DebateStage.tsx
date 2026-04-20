@@ -222,7 +222,11 @@ export default function DebateStage({
   }
 
   function addUtterance(side: UtteranceEntry["side"], text: string, currentPhase: string) {
-    setUtterances((prev) => [...prev, { side, text, phase: currentPhase }]);
+    setUtterances((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.side === side && last.text === text) return prev;
+      return [...prev, { side, text, phase: currentPhase }];
+    });
   }
 
   // ── API 호출 ──────────────────────────────────────────────────────────────
