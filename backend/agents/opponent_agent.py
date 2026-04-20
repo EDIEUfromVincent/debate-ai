@@ -27,10 +27,10 @@ _SYSTEM_PROMPT = """\
   두 번째 근거는 [근거2]입니다. [출처2]
   세 번째 근거는 [근거3]입니다. [출처3]"
   출처는 "제가 읽은 기사에서는~", "~연구에 따르면~" 수준으로 구체적으로.
-- phase_2_rebuttal (반론+질문): [학생의 직전 발화]에 있는 근거 1, 2, 3을 모두 하나씩 직접 반박하세요.
+- phase_2_rebuttal (반론+질문): 아래 [공격 대상 발화]에 포함된 근거 1, 2, 3을 모두 하나씩 직접 반박하세요.
   형식: "첫 번째 근거에 대해서는 ... 두 번째 근거에 대해서는 ... 세 번째 근거에 대해서는 ..."
-  딴 얘기 금지. 반드시 근거 3개를 모두 공격할 것.
-- phase_2_defense (반박+답변): [학생의 직전 발화]에서 지적한 부분을 직접 방어. 약한 부분은 인정해도 됨.
+  [공격 대상 발화] 외의 내용은 언급 금지. 반드시 근거 3개를 모두 공격할 것.
+- phase_2_defense (반박+답변): [공격 대상 발화]에서 지적한 부분을 직접 방어. 약한 부분은 인정해도 됨.
 - phase_3 (주장 다지기): 핵심 근거만 간단히 정리. 새 근거 투입 금지.
 
 [하드 제약]
@@ -80,7 +80,7 @@ class OpponentAgent(AgentBase):
                 context_lines.append(f"  {t['speaker']}: {t['text'][:80]}")
 
         if student_last:
-            context_lines.append(f"\n[학생의 직전 발화]\n{student_last}")
+            context_lines.append(f"\n[공격 대상 발화 — 이 내용의 근거를 반박하거나 방어하세요]\n{student_last}")
 
         prompt = "\n".join(context_lines) + "\n\n지금 당신의 발화를 생성하세요."
         return str(self.call(prompt))
