@@ -42,14 +42,15 @@ class AgentBase(ABC):
         self,
         user_message: str,
         history: list[dict[str, Any]] | None = None,
+        system_override: str | None = None,
     ) -> str | dict[str, Any]:
         """
         단일 턴 호출.
 
         Args:
-            user_message: 이번 턴의 입력 텍스트
-            history:      이전 대화 turns.
-                          [{"role": "user"|"model", "parts": [{"text": "..."}]}]
+            user_message:    이번 턴의 입력 텍스트
+            history:         이전 대화 turns.
+            system_override: 이 호출에만 적용할 시스템 프롬프트 (없으면 기본값 사용)
 
         Returns:
             response_schema가 없으면 str, 있으면 파싱된 dict.
@@ -59,7 +60,7 @@ class AgentBase(ABC):
 
         raw = generate(
             model=self.model,
-            system_instruction=self._system_prompt,
+            system_instruction=system_override if system_override is not None else self._system_prompt,
             contents=contents,
             response_schema=self.response_schema,
             max_output_tokens=self.max_tokens,

@@ -1,96 +1,136 @@
 """
-Opponent Agent — §8.2.2
-1:AI 모드에서 상대팀 역할. phase별 발화를 생성한다.
+Opponent Agent — 4단계 대칭 구조
+AI 관점: opening → attack → defense → closing
+학생 찬/반은 ai = "반대편" 한 줄로만 결정됨.
 """
 from __future__ import annotations
 
 from llm.agent_base import AgentBase
 
-_SYSTEM_PROMPT = """\
+# ── 스크립트 ─────────────────────────────────────────────────────────────────
+
+def ai_script(student_side: str) -> list[dict]:
+    ai  = "con" if student_side == "pro" else "pro"
+    opp = student_side
+    return [
+        {"role": "opening", "phase": f"phase_1_{ai}_1",          "reference": None},
+        {"role": "attack",  "phase": f"phase_2_{ai}_2_rebuttal", "reference": f"phase_1_{opp}_1"},
+        {"role": "defense", "phase": f"phase_2_{ai}_defense",    "reference": f"phase_2_{opp}_2_rebuttal"},
+        {"role": "closing", "phase": f"phase_3_{ai}_3",          "reference": f"phase_1_{ai}_1"},
+    ]
+
+
+def determine_ai_role(phase_id: str, student_side: str) -> dict:
+    for step in ai_script(student_side):
+        if step["phase"] == phase_id:
+            return {"speak": True, "role": step["role"], "reference_phase": step["reference"]}
+    return {"speak": False}
+
+
+# ── 프롬프트 ─────────────────────────────────────────────────────────────────
+
+_BASE = """\
 당신은 초등 6학년 토론 수업에서 {stance} 측을 맡은 AI 토론 상대입니다.
-초6 학생이 반박하기 적당한 수준으로 발언하세요. 어려운 용어 금지. 존댓말(~요, ~습니다) 필수. 반말 절대 금지.
-논리에 약간의 허점을 남겨 학생이 반박할 여지를 주세요.
+난이도: {difficulty}
 
-[난이도: {difficulty}]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-토론 절차와 당신의 역할
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-【1단계 — 주장 펼치기 (phase_1)】
-  당신이 먼저 또는 학생 다음에 자신의 입장을 발표합니다.
-  반드시 아래 형식:
-    "저는 [주장]을 주장합니다.
-     첫 번째 근거는 [근거1]입니다. [출처1]
-     두 번째 근거는 [근거2]입니다. [출처2]
-     세 번째 근거는 [근거3]입니다. [출처3]"
-  출처는 "제가 읽은 기사에서는~", "~연구에 따르면~" 수준으로 구체적으로.
-
-【2단계 — 반론 (phase_2_rebuttal)】
-  [공격 대상 발화]에 포함된 상대방의 근거 1, 2, 3을 각각 하나씩 반박합니다.
-  반드시 아래 형식:
-    "첫 번째 근거에 대해서는, [반박1]
-     두 번째 근거에 대해서는, [반박2]
-     세 번째 근거에 대해서는, [반박3]"
-  [공격 대상 발화] 이외의 내용 언급 금지. 근거 3개 모두 공격 필수.
-
-【2단계 — 수비 (phase_2_defense)】
-  [공격 대상 발화]에서 학생이 지적한 내용만 방어합니다.
-  약한 부분은 인정하면서도 핵심 근거는 유지하세요.
-  새로운 주장 투입 금지.
-
-【3단계 — 주장 다지기 (phase_3)】
-  1단계에서 제시한 자신의 핵심 근거 1, 2, 3을 간결하게 다시 정리합니다.
-  새 근거 투입 금지. 학생 발화 반박 금지. 자기 주장 정리만.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[하드 제약]
-- 3~6문장 이내
-- 초등학생 언어 수준
-- 존댓말 필수
-- 현재 단계의 역할만 수행할 것
-
-[출력] 발화 텍스트만. 단계 이름·설명·메타 정보 출력 금지.
+[언어 규칙]
+- 존댓말(~요, ~습니다) 필수. 반말 절대 금지.
+- 초등 6학년 수준 어휘. 어려운 용어 금지.
+- 약간의 논리적 허점을 남겨 학생이 반박할 여지를 주세요.
+- 발화 텍스트만 출력. 단계명·설명·메타 정보 출력 금지.
 """
 
+_ROLE_PROMPTS = {
+    "opening": """\
+주제: {topic}
+
+지금 당신의 입론을 발표할 차례입니다.
+반드시 아래 형식으로 발표하세요:
+"저는 [주장]을 주장합니다.
+ 첫 번째 근거는 [근거1]입니다. [출처1]
+ 두 번째 근거는 [근거2]입니다. [출처2]
+ 세 번째 근거는 [근거3]입니다. [출처3]"
+출처는 "제가 읽은 기사에서는~", "~연구에 따르면~" 수준으로 구체적으로 쓰세요.
+""",
+
+    "attack": """\
+주제: {topic}
+
+[상대방의 입론]
+{reference_utterance}
+
+위 입론에 포함된 근거 1, 2, 3을 각각 하나씩 공격하세요.
+반드시 아래 형식:
+"첫 번째 근거에 대해서는, [반박1]
+ 두 번째 근거에 대해서는, [반박2]
+ 세 번째 근거에 대해서는, [반박3]"
+위 입론 이외의 내용 언급 금지. 근거 3개 모두 공격 필수.
+""",
+
+    "defense": """\
+주제: {topic}
+
+[상대방의 공격]
+{reference_utterance}
+
+위 공격에서 지적한 내용만 방어하세요.
+약한 부분은 인정하되 핵심 근거는 유지하세요.
+역공격·새 주장 투입 금지.
+""",
+
+    "closing": """\
+주제: {topic}
+
+[당신의 원래 입론]
+{reference_utterance}
+
+위 입론에서 제시한 근거 1, 2, 3을 유지한 채 핵심만 재정리하세요.
+새 근거 절대 금지. 상대 발화 반박 금지. 자기 주장 정리만.
+""",
+}
+
+
+# ── 에이전트 ─────────────────────────────────────────────────────────────────
 
 class OpponentAgent(AgentBase):
-    model = "gemini-2.5-flash-lite"
+    model          = "gemini-2.5-flash-lite"
     thinking_budget = 0
-    max_tokens = 400
-    temperature = 0.8
+    max_tokens     = 500
+    temperature    = 0.8
 
     def __init__(self, stance: str = "반대", difficulty: str = "medium") -> None:
-        self._stance = stance
+        self._stance     = stance
         self._difficulty = difficulty
         super().__init__()
 
     def build_system_prompt(self) -> str:
-        return _SYSTEM_PROMPT.format(stance=self._stance, difficulty=self._difficulty)
+        return _BASE.format(stance=self._stance, difficulty=self._difficulty)
 
     def speak(
         self,
         phase_id: str,
+        student_side: str,
         topic: str,
-        prior_turns: list[dict] | None = None,
-        student_last: str = "",
-    ) -> str:
-        """
-        Args:
-            phase_id:     현재 phase (예: "phase_1_con_1")
-            topic:        토론 주제
-            prior_turns:  세션 누적 발화 [{"speaker": ..., "text": ...}]
-            student_last: 학생의 직전 발화 (반론·답변 단계에서 사용)
-        """
-        context_lines = [f"토론 주제: {topic}", f"현재 단계: {phase_id}"]
+        all_turns: list[dict],
+    ) -> str | None:
+        role_info = determine_ai_role(phase_id, student_side)
+        if not role_info["speak"]:
+            return None
 
-        if prior_turns:
-            context_lines.append("\n[이전 발화 요약]")
-            for t in prior_turns[-6:]:  # 최근 6턴만
-                context_lines.append(f"  {t['speaker']}: {t['text'][:80]}")
+        role = role_info["role"]
+        ref_text = ""
+        if role_info["reference_phase"]:
+            ref_text = self._find_utterance(all_turns, role_info["reference_phase"])
 
-        if student_last:
-            context_lines.append(f"\n[공격 대상 발화 — 이 내용의 근거를 반박하거나 방어하세요]\n{student_last}")
+        system = _BASE.format(stance=self._stance, difficulty=self._difficulty)
+        instruction = _ROLE_PROMPTS[role].format(
+            topic=topic,
+            reference_utterance=ref_text or "(참조 발화 없음)",
+        )
+        return str(self.call(instruction, system_override=system))
 
-        prompt = "\n".join(context_lines) + "\n\n지금 당신의 발화를 생성하세요."
-        return str(self.call(prompt))
+    def _find_utterance(self, turns: list[dict], phase_id: str) -> str:
+        for t in turns:
+            if t.get("phase") == phase_id:
+                return t["text"]
+        return ""
