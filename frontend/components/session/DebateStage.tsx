@@ -503,7 +503,7 @@ export default function DebateStage({
   );
 
   return (
-    <div className="relative h-full max-w-5xl mx-auto px-3 py-3
+    <div className="h-full max-w-5xl mx-auto px-3 py-3
                     grid grid-cols-1 md:grid-cols-[1fr_260px] gap-3">
       <HomeButton />
       <div className="flex flex-col h-full min-h-0">

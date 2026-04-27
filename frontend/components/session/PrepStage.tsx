@@ -218,7 +218,7 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
 
   return (
     // 데스크톱: 채팅 + 사이드바 / 모바일: 채팅만
-    <div className="relative h-full max-w-5xl mx-auto px-4 py-4
+    <div className="h-full max-w-5xl mx-auto px-4 py-4
                     grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4">
       <HomeButton />
       {/* 채팅 영역 */}

@@ -11,7 +11,7 @@ export default function HomeButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="absolute top-3 left-3 z-40 flex items-center gap-1.5
+        className="fixed top-3 left-3 z-40 flex items-center gap-1.5
                    rounded-xl border border-gray-200 bg-white/90 backdrop-blur
                    px-3 py-1.5 text-sm font-semibold text-gray-700
                    shadow-sm hover:bg-gray-50 transition-colors"
