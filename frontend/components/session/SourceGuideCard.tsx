@@ -12,8 +12,8 @@ export default function SourceGuideCard() {
     >
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
-        style={{ borderBottom: open ? "2px solid #000" : "none" }}
+        className="w-full flex items-center justify-between px-4 text-left"
+        style={{ borderBottom: open ? "2px solid #000" : "none", minHeight: "72px" }}
       >
         <span className="font-black text-black text-sm">📚 좋은 자료 찾는 팁</span>
         <span className="font-bold text-gray-600 text-xs">{open ? "▲ 접기" : "▼ 펼치기"}</span>

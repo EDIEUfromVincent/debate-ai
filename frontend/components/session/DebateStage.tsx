@@ -326,8 +326,6 @@ export default function DebateStage({
     >
       <div className="flex flex-col h-full min-h-0">
         <div className="flex flex-col h-full gap-2">
-          <HomeButton />
-
           {/* 규칙 위반 */}
           {violation && (
             <div
@@ -340,17 +338,22 @@ export default function DebateStage({
 
           {/* Phase 배너 */}
           <div
-            className="bg-white px-4 py-3 flex items-center justify-between gap-3 shrink-0"
+            className="bg-white flex items-center shrink-0"
             style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
           >
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-0.5">현재 단계</p>
-              <p className="text-base font-black text-black truncate">{phaseName}</p>
+            <div className="px-2 py-2 shrink-0">
+              <HomeButton />
             </div>
-            {!noTimer && (
-              <div className={`text-3xl font-black tabular-nums ${timerRed ? "text-red-600 animate-pulse" : "text-black"}`}>
+            <div className="flex-1 text-center py-3">
+              <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-0.5">현재 단계</p>
+              <p className="text-base font-black text-black">{phaseName}</p>
+            </div>
+            {!noTimer ? (
+              <div className={`px-4 text-3xl font-black tabular-nums shrink-0 ${timerRed ? "text-red-600 animate-pulse" : "text-black"}`}>
                 {ended ? "--:--" : `${mm}:${ss}`}
               </div>
+            ) : (
+              <div className="px-2 py-2 shrink-0 invisible"><HomeButton /></div>
             )}
           </div>
 

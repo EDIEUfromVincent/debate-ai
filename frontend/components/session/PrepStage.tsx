@@ -95,14 +95,19 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
     >
       {/* 채팅 영역 */}
       <div className="flex flex-col h-full min-h-0 gap-3">
-        <HomeButton />
         {/* 주제 배너 */}
         <div
-          className="px-5 py-3 text-center shrink-0 bg-white"
+          className="shrink-0 bg-white flex items-center"
           style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
         >
-          <p className="text-xs font-black text-black uppercase tracking-widest mb-1">오늘의 토론 주제</p>
-          <p className="text-lg font-black text-black leading-snug">{topic}</p>
+          <div className="px-2 py-2 shrink-0">
+            <HomeButton />
+          </div>
+          <div className="flex-1 text-center py-3">
+            <p className="text-xs font-black text-black uppercase tracking-widest mb-1">오늘의 토론 주제</p>
+            <p className="text-lg font-black text-black leading-snug">{topic}</p>
+          </div>
+          <div className="px-2 py-2 shrink-0 invisible"><HomeButton /></div>
         </div>
 
         {showGuideOnMobile && (
