@@ -11,7 +11,7 @@ export default function HomeButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-3 left-3 z-40 flex items-center gap-1.5 px-3 py-1.5 font-black text-sm bg-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+        className="flex items-center gap-1.5 px-3 py-1.5 font-black text-sm bg-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all self-start"
         style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
       >
         🏠 홈
