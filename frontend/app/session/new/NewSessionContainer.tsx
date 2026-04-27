@@ -43,7 +43,7 @@ export default function NewSessionContainer() {
       const pick = window.confirm("입장을 선택하세요.\n확인 = 찬성 / 취소 = 반대");
       result = { ...result, stance: pick ? "찬성" : "반대" };
     }
-    const side: "pro" | "con" = result.stance === "반대" ? "con" : "pro";
+    const side: "pro" | "con" = result.stance === "찬성" ? "pro" : "con";
     setPrepNote({ stance: result.stance, grounds: result.grounds, sources: result.sources });
 
     const res = await fetch("/api/debate/start", {
