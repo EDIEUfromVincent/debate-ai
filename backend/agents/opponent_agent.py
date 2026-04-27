@@ -43,14 +43,20 @@ _BASE = """\
 _ROLE_PROMPTS = {
     "opening": """\
 주제: {topic}
+당신의 입장: {stance}측
 
-지금 당신의 입론을 발표할 차례입니다.
-반드시 아래 형식으로 발표하세요:
-"저는 [주장]을 주장합니다.
+⚠️ 절대 규칙: 당신은 {stance}측입니다.
+{stance} 입장에서만 주장하세요.
+반대 입장의 논리를 절대 사용하지 마세요.
+
+지금 입론을 발표할 차례입니다.
+반드시 아래 형식:
+"저는 {stance}합니다.
  첫 번째 근거는 [근거1]입니다. [출처1]
  두 번째 근거는 [근거2]입니다. [출처2]
  세 번째 근거는 [근거3]입니다. [출처3]"
-출처는 "제가 읽은 기사에서는~", "~연구에 따르면~" 수준으로 구체적으로 쓰세요.
+
+출처는 "제가 읽은 기사에서는~", "~연구에 따르면~" 수준으로 구체적으로.
 """,
 
     "attack": """\
@@ -125,6 +131,7 @@ class OpponentAgent(AgentBase):
         system = _BASE.format(stance=self._stance, difficulty=self._difficulty)
         instruction = _ROLE_PROMPTS[role].format(
             topic=topic,
+            stance=self._stance,
             reference_utterance=ref_text or "(참조 발화 없음)",
         )
         return str(self.call(instruction, system_override=system))
