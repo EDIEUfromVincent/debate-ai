@@ -1,6 +1,7 @@
 "use client";
 
 import { JudgeResult } from "./DebateStage";
+import HomeButton from "@/components/common/HomeButton";
 
 interface JudgeStageProps {
   result: JudgeResult;
@@ -75,7 +76,8 @@ export default function JudgeStage({ result, topic, studentSide, onRestart }: Ju
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4 gap-6">
+    <div className="relative min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4 gap-6">
+      <HomeButton />
       {/* 승자 배지 */}
       <div className="rounded-2xl bg-white border shadow-md w-full max-w-lg p-8 text-center">
         <p className="text-5xl mb-3">{winner === "tie" ? "🤝" : "🏆"}</p>

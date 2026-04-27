@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { prepChat, PrepResult } from "@/lib/api";
 import SourceGuideCard from "@/components/session/SourceGuideCard";
+import HomeButton from "@/components/common/HomeButton";
 
 interface Message {
   role: "student" | "ai";
@@ -217,8 +218,9 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
 
   return (
     // 데스크톱: 채팅 + 사이드바 / 모바일: 채팅만
-    <div className="h-full max-w-5xl mx-auto px-4 py-4
+    <div className="relative h-full max-w-5xl mx-auto px-4 py-4
                     grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4">
+      <HomeButton />
       {/* 채팅 영역 */}
       <div className="flex flex-col h-full min-h-0">
         {chatArea}

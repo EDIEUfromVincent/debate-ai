@@ -171,3 +171,21 @@ class DebateStateMachine:
 
     def constraints_of(self, state: State) -> dict[str, Any]:
         return _CONSTRAINTS.get(state, {})
+
+    def rewind_to_last_student_turn(self) -> None:
+        _STUDENT_STATES = {
+            State.PHASE_1_PRO_1,
+            State.PHASE_1_CON_1,
+            State.PHASE_2_CON_2_REBUTTAL,
+            State.PHASE_2_PRO_DEFENSE,
+            State.PHASE_2_PRO_2_REBUTTAL,
+            State.PHASE_2_CON_DEFENSE,
+            State.PHASE_3_CON_3,
+            State.PHASE_3_PRO_3,
+        }
+        while self.history:
+            entry = self.history.pop()
+            if entry["from"] in _STUDENT_STATES:
+                self.current = entry["from"]
+                return
+        self.current = State.IDLE

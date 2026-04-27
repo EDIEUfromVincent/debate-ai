@@ -379,6 +379,30 @@ class JoinRequest(BaseModel):
     side: str   # "pro" | "con"
 
 
+class UndoRequest(BaseModel):
+    session_id: str
+
+
+@router.post("/debate/undo")
+async def debate_undo(req: UndoRequest) -> dict[str, Any]:
+    sess = _sessions.get(req.session_id)
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # 마지막 학생 발화와 그 이후 AI 발화 전부 제거
+    last_student_idx = None
+    for i in range(len(sess.turns) - 1, -1, -1):
+        if sess.turns[i]["speaker"] == sess.student_side:
+            last_student_idx = i
+            break
+    if last_student_idx is not None:
+        sess.turns = sess.turns[:last_student_idx]
+
+    sess.sm.rewind_to_last_student_turn()
+    sess.pending_transition = False
+    return {"ok": True, "phase": sess.sm.current.value}
+
+
 @router.post("/debate/join")
 async def debate_join(req: JoinRequest) -> dict[str, Any]:
     sess = _sessions.get(req.session_id)

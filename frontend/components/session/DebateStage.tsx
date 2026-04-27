@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import HomeButton from "@/components/common/HomeButton";
 
 // ── 타입 ─────────────────────────────────────────────────────────────────────
 interface TurnResponse {
@@ -99,8 +100,12 @@ export default function DebateStage({
   const [ended, setEnded]               = useState(false);
   const [noteOpen, setNoteOpen]         = useState(true);
 
+  const [undoVisible, setUndoVisible]   = useState(false);
+  const [lastSentText, setLastSentText] = useState("");
+
   const timerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+  const undoTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const turnCountRef   = useRef(initialUtterances.filter(u => u.side !== "mc" && u.side !== "system").length);
   const myTurnWasRef   = useRef(false);
   const bottomRef      = useRef<HTMLDivElement>(null);
@@ -247,9 +252,37 @@ export default function DebateStage({
       const data = await res.json();
       if (!res.ok) { setIsStudentTurn(true); return; }
       applyResponse(data);
+      setLastSentText(text);
+      setUndoVisible(true);
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = setTimeout(() => setUndoVisible(false), 5000);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
+    }
+  }
+
+  async function handleUndo() {
+    if (!lastSentText) return;
+    setUndoVisible(false);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    const res = await fetch("/api/debate/undo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionRef.current }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setUtterances((prev) => {
+        const idx = [...prev].reverse().findIndex((u) => u.side === studentSide);
+        if (idx === -1) return prev;
+        return prev.slice(0, prev.length - 1 - idx);
+      });
+      setPhase(data.phase);
+      setIsStudentTurn(true);
+      setAwaitingAck(false);
+      setInput(lastSentText);
+      setLastSentText("");
     }
   }
 
@@ -374,9 +407,26 @@ export default function DebateStage({
       {/* 발화 기록 */}
       <ScrollArea className="flex-1 rounded-2xl border bg-white shadow-sm px-3 py-3">
         <div className="flex flex-col gap-2 pb-2">
-          {utterances.map((u, i) => (
-            <DebateBubble key={i} entry={u} studentSide={studentSide} />
-          ))}
+          {utterances.map((u, i) => {
+            const isLastStudentBubble =
+              u.side === studentSide &&
+              utterances.slice(i + 1).every((x) => x.side !== studentSide);
+            return (
+              <div key={i}>
+                <DebateBubble entry={u} studentSide={studentSide} />
+                {isLastStudentBubble && undoVisible && (
+                  <div className={`flex mt-1 ${u.side === "pro" ? "justify-start pl-1" : "justify-end pr-1"}`}>
+                    <button
+                      onClick={handleUndo}
+                      className="text-xs text-gray-400 underline hover:text-gray-600"
+                    >
+                      ↩️ 되돌리기
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {loading && (
             <div className="text-center text-gray-400 text-sm py-1">
               <span className="animate-bounce inline-block mr-0.5">●</span>
@@ -453,8 +503,9 @@ export default function DebateStage({
   );
 
   return (
-    <div className="h-full max-w-5xl mx-auto px-3 py-3
+    <div className="relative h-full max-w-5xl mx-auto px-3 py-3
                     grid grid-cols-1 md:grid-cols-[1fr_260px] gap-3">
+      <HomeButton />
       <div className="flex flex-col h-full min-h-0">
         {chatArea}
       </div>
