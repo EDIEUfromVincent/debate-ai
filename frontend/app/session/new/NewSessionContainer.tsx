@@ -135,11 +135,7 @@ export default function NewSessionContainer() {
 
   if (appPhase === "debate" && debateSession) {
     return (
-      <main className="min-h-screen bg-gray-50 flex flex-col">
-        <header className="bg-white border-b px-4 py-3 text-center shadow-sm shrink-0">
-          <p className="text-sm font-bold text-blue-600">토론 수업 AI</p>
-          <p className="text-xs text-gray-400 truncate max-w-xs mx-auto">{debateSession.topic}</p>
-        </header>
+      <main className="min-h-screen flex flex-col" style={{ background: "#A8F0E0" }}>
         <div className="flex-1 overflow-hidden">
           <DebateStage
             sessionId={debateSession.sessionId}
@@ -174,16 +170,7 @@ export default function NewSessionContainer() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b px-4 py-3 text-center shadow-sm">
-        <p className="text-sm font-bold text-blue-600 tracking-wide">토론 수업 AI</p>
-        <p className="text-xs text-gray-400 truncate max-w-xs mx-auto">{topic}</p>
-        {mode === "1v1" && (
-          <span className="inline-block mt-0.5 text-xs bg-purple-100 text-purple-600 font-semibold px-2 py-0.5 rounded-full">
-            1:1 모드
-          </span>
-        )}
-      </header>
+    <main className="min-h-screen flex flex-col" style={{ background: "#A8F0E0" }}>
       <div className="flex-1 overflow-hidden py-3">
         <PrepStage topic={topic} onComplete={handlePrepComplete} />
       </div>
