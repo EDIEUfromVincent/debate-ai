@@ -18,10 +18,10 @@ const AXIS_LABELS: Record<string, string> = {
 };
 
 const EVENT_LABELS: Record<string, string> = {
-  new_evidence:  "🆕 새 근거 투입",
-  insult:        "🚫 비방·거친말",
-  off_topic:     "⚠️ 주제 이탈",
-  no_response:   "⏰ 무응답",
+  new_evidence: "🆕 새 근거 투입",
+  insult:       "🚫 비방·거친말",
+  off_topic:    "⚠️ 주제 이탈",
+  no_response:  "⏰ 무응답",
 };
 
 export default function JudgeStage({ result, topic, studentSide, onRestart }: JudgeStageProps) {
@@ -32,17 +32,17 @@ export default function JudgeStage({ result, topic, studentSide, onRestart }: Ju
     : winner === "con" ? "반대 팀 승리!"
     : "무승부!";
 
-  const winnerColor =
-    winner === "pro" ? "text-blue-600"
-    : winner === "con" ? "text-red-600"
-    : "text-gray-600";
+  const winnerBg =
+    winner === "pro" ? "#3b82f6"
+    : winner === "con" ? "#ef4444"
+    : "#6b7280";
 
   const studentWon =
     (winner === "pro" && studentSide === "pro") ||
     (winner === "con" && studentSide === "con");
 
   function handleDownload() {
-    const lines: string[] = [
+    const lines = [
       `# 토론 결과 보고서`,
       ``,
       `**주제**: ${topic}`,
@@ -58,89 +58,100 @@ export default function JudgeStage({ result, topic, studentSide, onRestart }: Ju
         (ax) => `| ${ax} ${AXIS_LABELS[ax]} | ${pro_score[ax]}/3 | ${con_score[ax]}/3 |`
       ),
       `| **합계** | **${pro_score.total}/12** | **${con_score.total}/12** |`,
-      ``,
     ];
     if (events.length > 0) {
-      lines.push(`## 탐지 이벤트`);
-      for (const ev of events) {
+      lines.push(``, `## 탐지 이벤트`);
+      for (const ev of events)
         lines.push(`- ${EVENT_LABELS[ev.type] ?? ev.type} (${ev.side === "pro" ? "찬성" : "반대"}, ${ev.phase})`);
-      }
     }
     const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = "debate_result.md";
-    a.click();
+    a.href = url; a.download = "debate_result.md"; a.click();
     URL.revokeObjectURL(url);
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4 gap-6">
+    <div
+      className="min-h-screen flex flex-col items-center py-10 px-4 gap-5"
+      style={{ background: "#A8F0E0" }}
+    >
       <HomeButton />
+
       {/* 승자 배지 */}
-      <div className="rounded-2xl bg-white border shadow-md w-full max-w-lg p-8 text-center">
+      <div
+        className="bg-white w-full max-w-lg p-8 text-center"
+        style={{ border: "3px solid #000", boxShadow: "6px 6px 0px #000" }}
+      >
         <p className="text-5xl mb-3">{winner === "tie" ? "🤝" : "🏆"}</p>
-        <p className={`text-2xl font-extrabold mb-1 ${winnerColor}`}>{winnerLabel}</p>
-        <p className="text-sm text-gray-400 mb-2">
-          당신은 <span className="font-bold">{studentSide === "pro" ? "찬성" : "반대"}</span> —&nbsp;
+        <p className="text-3xl font-black mb-2" style={{ color: winnerBg }}>{winnerLabel}</p>
+        <p className="text-sm font-bold text-black">
+          당신은 <span className="font-black">{studentSide === "pro" ? "찬성" : "반대"}</span> —&nbsp;
           {studentWon
-            ? <span className="text-green-600 font-bold">승리했습니다 🎉</span>
+            ? <span style={{ color: "#16a34a" }}>승리했습니다 🎉</span>
             : winner === "tie"
-            ? <span className="text-gray-500 font-bold">무승부</span>
-            : <span className="text-red-500 font-bold">패배했습니다</span>}
+            ? <span className="text-gray-500">무승부</span>
+            : <span style={{ color: "#dc2626" }}>패배했습니다</span>}
         </p>
       </div>
 
       {/* 4축 막대그래프 */}
-      <div className="rounded-2xl bg-white border shadow-sm w-full max-w-lg p-6">
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">4축 점수</p>
-        <div className="flex flex-col gap-3">
+      <div
+        className="bg-white w-full max-w-lg p-6"
+        style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+      >
+        <p className="text-xs font-black text-black uppercase tracking-widest mb-4">4축 점수</p>
+        <div className="flex flex-col gap-4">
           {(["A", "B", "C", "D"] as const).map((ax) => (
             <div key={ax}>
-              <p className="text-xs text-gray-500 mb-0.5">{ax} {AXIS_LABELS[ax]}</p>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-blue-600 font-semibold">{pro_score[ax]}/3</span>
-                <span className="text-red-600 font-semibold">{con_score[ax]}/3</span>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-black text-black">{ax} {AXIS_LABELS[ax]}</span>
+                <div className="flex gap-3 text-xs font-black">
+                  <span style={{ color: "#3b82f6" }}>찬성 {pro_score[ax]}/3</span>
+                  <span style={{ color: "#ef4444" }}>반대 {con_score[ax]}/3</span>
+                </div>
               </div>
-              <div className="flex gap-1 h-4">
-                {/* 찬성 바 */}
-                <div className="flex-1 bg-gray-100 rounded-full overflow-hidden flex justify-end">
-                  <div
-                    className="bg-blue-400 rounded-full transition-all"
-                    style={{ width: `${(pro_score[ax] / 3) * 100}%` }}
-                  />
-                </div>
-                {/* 반대 바 */}
-                <div className="flex-1 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="bg-red-400 rounded-full transition-all"
-                    style={{ width: `${(con_score[ax] / 3) * 100}%` }}
-                  />
-                </div>
+              {/* 찬성 바 */}
+              <div className="mb-1" style={{ height: 14, background: "#e5e7eb", border: "2px solid #000" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${(pro_score[ax] / 3) * 100}%`,
+                    background: "#3b82f6",
+                    transition: "width 0.4s",
+                  }}
+                />
+              </div>
+              {/* 반대 바 */}
+              <div style={{ height: 14, background: "#e5e7eb", border: "2px solid #000" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${(con_score[ax] / 3) * 100}%`,
+                    background: "#ef4444",
+                    transition: "width 0.4s",
+                  }}
+                />
               </div>
             </div>
           ))}
         </div>
 
-        {/* 총점 게이지 */}
-        <div className="mt-5 border-t pt-4">
-          <p className="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">총점 (12점 만점)</p>
+        {/* 총점 */}
+        <div className="mt-5 pt-4" style={{ borderTop: "2px solid #000" }}>
+          <p className="text-xs font-black text-black uppercase tracking-widest mb-2">총점 (12점 만점)</p>
           <div className="flex items-center gap-3">
-            <span className="text-blue-600 font-bold w-10 text-right">{pro_score.total}</span>
-            <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden flex">
-              <div
-                className="bg-blue-500 h-full transition-all"
-                style={{ width: `${(pro_score.total / 12) * 100}%` }}
-              />
-              <div
-                className="bg-red-500 h-full transition-all"
-                style={{ width: `${(con_score.total / 12) * 100}%` }}
-              />
+            <span className="font-black w-6 text-right" style={{ color: "#3b82f6" }}>{pro_score.total}</span>
+            <div
+              className="flex-1 overflow-hidden"
+              style={{ height: 20, background: "#e5e7eb", border: "2px solid #000", display: "flex" }}
+            >
+              <div style={{ width: `${(pro_score.total / 12) * 100}%`, background: "#3b82f6", height: "100%" }} />
+              <div style={{ width: `${(con_score.total / 12) * 100}%`, background: "#ef4444", height: "100%" }} />
             </div>
-            <span className="text-red-600 font-bold w-10">{con_score.total}</span>
+            <span className="font-black w-6" style={{ color: "#ef4444" }}>{con_score.total}</span>
           </div>
-          <div className="flex justify-between text-xs text-gray-400 mt-1 px-10">
+          <div className="flex justify-between text-xs font-bold text-gray-500 mt-1 px-8">
             <span>찬성</span>
             <span>반대</span>
           </div>
@@ -148,22 +159,28 @@ export default function JudgeStage({ result, topic, studentSide, onRestart }: Ju
       </div>
 
       {/* AI 총평 */}
-      <div className="rounded-2xl bg-blue-50 border border-blue-200 shadow-sm w-full max-w-lg p-6">
-        <p className="text-xs font-bold text-blue-500 uppercase tracking-wide mb-2">AI 총평</p>
-        <p className="text-sm text-blue-900 leading-relaxed">{summary}</p>
+      <div
+        className="bg-white w-full max-w-lg p-6"
+        style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+      >
+        <p className="text-xs font-black text-black uppercase tracking-widest mb-2">AI 총평</p>
+        <p className="text-sm font-bold text-black leading-relaxed">{summary}</p>
       </div>
 
       {/* 이벤트 목록 */}
       {events.length > 0 && (
-        <div className="rounded-2xl bg-yellow-50 border border-yellow-200 shadow-sm w-full max-w-lg p-6">
-          <p className="text-xs font-bold text-yellow-600 uppercase tracking-wide mb-3">탐지된 이벤트</p>
+        <div
+          className="w-full max-w-lg p-6"
+          style={{ background: "#fef08a", border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+        >
+          <p className="text-xs font-black text-black uppercase tracking-widest mb-3">탐지된 이벤트</p>
           <ul className="flex flex-col gap-1.5">
             {events.map((ev, i) => (
-              <li key={i} className="text-sm text-yellow-900 flex items-center gap-2">
+              <li key={i} className="text-sm font-bold text-black flex items-center gap-2">
                 <span>{EVENT_LABELS[ev.type] ?? ev.type}</span>
-                <span className="text-yellow-500">·</span>
+                <span>·</span>
                 <span>{ev.side === "pro" ? "찬성" : "반대"}</span>
-                <span className="text-yellow-400 text-xs">{ev.phase}</span>
+                <span className="text-gray-500 text-xs">{ev.phase}</span>
               </li>
             ))}
           </ul>
@@ -174,15 +191,15 @@ export default function JudgeStage({ result, topic, studentSide, onRestart }: Ju
       <div className="flex gap-3 w-full max-w-lg">
         <button
           onClick={handleDownload}
-          className="flex-1 rounded-2xl border border-gray-300 bg-white py-3 text-sm font-semibold
-                     text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex-1 py-3 font-black text-black bg-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+          style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
         >
-          결과 다운로드 (.md)
+          결과 다운로드
         </button>
         <button
           onClick={onRestart}
-          className="flex-1 rounded-2xl bg-blue-600 py-3 text-sm font-bold
-                     text-white hover:bg-blue-700 transition-colors"
+          className="flex-1 py-3 font-black text-black active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+          style={{ background: "#faff00", border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
         >
           새 토론 시작
         </button>
