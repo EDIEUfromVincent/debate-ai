@@ -93,10 +93,9 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
       className="h-full max-w-5xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4"
       style={{ background: "#A8F0E0" }}
     >
-      <HomeButton />
-
       {/* 채팅 영역 */}
       <div className="flex flex-col h-full min-h-0 gap-3">
+        <HomeButton />
         {/* 주제 배너 */}
         <div
           className="px-5 py-3 text-center shrink-0 bg-white"

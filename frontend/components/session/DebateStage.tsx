@@ -324,9 +324,9 @@ export default function DebateStage({
       className="h-full max-w-5xl mx-auto px-3 py-3 grid grid-cols-1 md:grid-cols-[1fr_260px] gap-3"
       style={{ background: "#A8F0E0" }}
     >
-      <HomeButton />
       <div className="flex flex-col h-full min-h-0">
         <div className="flex flex-col h-full gap-2">
+          <HomeButton />
 
           {/* 규칙 위반 */}
           {violation && (
