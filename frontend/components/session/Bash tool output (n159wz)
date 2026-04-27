@@ -1,0 +1,4 @@
+[main c3d58c2] fix: opponent 존댓말 강제, rebuttal시 근거 1,2,3 모두 반박
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+To https://github.com/EDIEUfromVincent/debate-ai.git
+   4a18ed7..c3d58c2  main -> main
