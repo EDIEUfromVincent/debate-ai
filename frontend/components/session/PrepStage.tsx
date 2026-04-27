@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { prepChat, PrepResult } from "@/lib/api";
 import SourceGuideCard from "@/components/session/SourceGuideCard";
 import HomeButton from "@/components/common/HomeButton";
@@ -30,12 +27,10 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doneResult, setDoneResult] = useState<PrepResult | null>(null);
-  const [autoMode, setAutoMode]     = useState(false);  // 연습 stance 선택 UI
+  const [autoMode, setAutoMode] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // 모바일: 턴 4 진입 시(turns.length >= 3) 카드 표시
   const showGuideOnMobile = turns.length >= 3;
 
   useEffect(() => {
@@ -56,32 +51,22 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
       return;
     }
 
-    const userMsg: Message = { role: "student", text: studentInput };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { role: "student", text: studentInput }]);
     setInput("");
     setLoading(true);
     setError(null);
 
     try {
       const res = await prepChat({ topic, turns, student_input: studentInput });
-
-      const aiMsg: Message = { role: "ai", text: res.ai_response };
-      setMessages((prev) => [...prev, aiMsg]);
+      setMessages((prev) => [...prev, { role: "ai", text: res.ai_response }]);
       setTurns((prev) => [...prev, [studentInput, res.ai_response]]);
-
-      if (res.done && res.result) {
-        setDoneResult(res.result);
-      }
+      if (res.done && res.result) setDoneResult(res.result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했어요. 다시 시도해 주세요.");
     } finally {
       setLoading(false);
       inputRef.current?.focus();
     }
-  }
-
-  function handleSkip() {
-    sendMessage("건너뛰기");
   }
 
   async function handleAuto(stance: "찬성" | "반대") {
@@ -95,8 +80,7 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
         body: JSON.stringify({ topic, stance }),
       });
       if (!res.ok) throw new Error("자동 생성 실패");
-      const result: PrepResult = await res.json();
-      setDoneResult(result);
+      setDoneResult(await res.json());
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했어요.");
     } finally {
@@ -104,129 +88,129 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
     }
   }
 
-  const chatArea = (
-    <div className="flex flex-col h-full gap-3">
-      {/* 주제 배너 */}
-      <div className="rounded-2xl bg-blue-50 border border-blue-200 px-5 py-3 text-center shrink-0">
-        <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1">
-          오늘의 토론 주제
-        </p>
-        <p className="text-lg font-bold text-blue-800 leading-snug">{topic}</p>
-      </div>
-
-      {/* 모바일: 턴 4 이상에서 가이드 카드 */}
-      {showGuideOnMobile && (
-        <div className="md:hidden shrink-0">
-          <SourceGuideCard />
-        </div>
-      )}
-
-      {/* 채팅 영역 */}
-      <ScrollArea className="flex-1 rounded-2xl border bg-white shadow-sm px-4 py-3">
-        <div className="flex flex-col gap-3 pb-2">
-          {messages.map((msg, i) => (
-            <ChatBubble key={i} role={msg.role} text={msg.text} />
-          ))}
-
-          {loading && (
-            <div className="flex items-center gap-2 text-gray-400 text-sm pl-1">
-              <span className="animate-bounce">●</span>
-              <span className="animate-bounce [animation-delay:0.15s]">●</span>
-              <span className="animate-bounce [animation-delay:0.3s]">●</span>
-              <span className="ml-1">AI 도우미가 생각 중이에요...</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-600">
-              {error}
-            </div>
-          )}
-
-          <div ref={bottomRef} />
-        </div>
-      </ScrollArea>
-
-      {/* 준비 완료 카드 */}
-      {doneResult && (
-        <PrepResultCard result={doneResult} onStart={() => onComplete(doneResult)} />
-      )}
-
-      {/* 입력 영역 */}
-      {!doneResult && (
-        <div className="flex gap-2 items-center shrink-0">
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-            placeholder="여기에 입력하세요..."
-            disabled={loading}
-            className="flex-1 rounded-2xl border border-gray-300 px-4 py-3 text-base
-                       focus:outline-none focus:ring-2 focus:ring-blue-400
-                       disabled:bg-gray-100 disabled:cursor-not-allowed"
-          />
-          <Button
-            onClick={() => sendMessage(input)}
-            disabled={loading || !input.trim()}
-            className="rounded-2xl px-5 py-3 text-base font-bold bg-blue-500
-                       hover:bg-blue-600 disabled:opacity-40 h-auto"
-          >
-            전송
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleSkip}
-            disabled={loading}
-            className="rounded-2xl px-4 py-3 text-sm text-gray-500 h-auto whitespace-nowrap"
-          >
-            건너뛰기
-          </Button>
-          {!autoMode ? (
-            <Button
-              variant="outline"
-              onClick={() => setAutoMode(true)}
-              disabled={loading}
-              className="rounded-2xl px-4 py-3 text-sm text-purple-600 border-purple-300 h-auto whitespace-nowrap"
-            >
-              ✏️ 연습
-            </Button>
-          ) : (
-            <div className="flex gap-1">
-              <Button
-                onClick={() => handleAuto("찬성")}
-                disabled={loading}
-                className="rounded-2xl px-3 py-3 text-sm font-bold bg-blue-500 hover:bg-blue-600 h-auto"
-              >찬성</Button>
-              <Button
-                onClick={() => handleAuto("반대")}
-                disabled={loading}
-                className="rounded-2xl px-3 py-3 text-sm font-bold bg-red-500 hover:bg-red-600 h-auto"
-              >반대</Button>
-              <Button
-                variant="outline"
-                onClick={() => setAutoMode(false)}
-                disabled={loading}
-                className="rounded-2xl px-3 py-3 text-sm h-auto"
-              >✕</Button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
   return (
-    // 데스크톱: 채팅 + 사이드바 / 모바일: 채팅만
-    <div className="h-full max-w-5xl mx-auto px-4 py-4
-                    grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4">
+    <div
+      className="h-full max-w-5xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4"
+      style={{ background: "#A8F0E0" }}
+    >
       <HomeButton />
+
       {/* 채팅 영역 */}
-      <div className="flex flex-col h-full min-h-0">
-        {chatArea}
+      <div className="flex flex-col h-full min-h-0 gap-3">
+        {/* 주제 배너 */}
+        <div
+          className="px-5 py-3 text-center shrink-0 bg-white"
+          style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+        >
+          <p className="text-xs font-black text-black uppercase tracking-widest mb-1">오늘의 토론 주제</p>
+          <p className="text-lg font-black text-black leading-snug">{topic}</p>
+        </div>
+
+        {showGuideOnMobile && (
+          <div className="md:hidden shrink-0">
+            <SourceGuideCard />
+          </div>
+        )}
+
+        {/* 채팅 */}
+        <div
+          className="flex-1 overflow-y-auto bg-white px-4 py-3"
+          style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+        >
+          <div className="flex flex-col gap-3 pb-2">
+            {messages.map((msg, i) => (
+              <ChatBubble key={i} role={msg.role} text={msg.text} />
+            ))}
+            {loading && (
+              <div className="flex items-center gap-2 text-black font-bold text-sm pl-1">
+                <span className="animate-bounce">●</span>
+                <span className="animate-bounce [animation-delay:0.15s]">●</span>
+                <span className="animate-bounce [animation-delay:0.3s]">●</span>
+                <span className="ml-1">AI 도우미가 생각 중이에요...</span>
+              </div>
+            )}
+            {error && (
+              <div
+                className="px-4 py-2 text-sm font-bold"
+                style={{ background: "#fecaca", border: "2px solid #000" }}
+              >
+                {error}
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+        </div>
+
+        {/* 준비 완료 카드 */}
+        {doneResult && (
+          <PrepResultCard result={doneResult} onStart={() => onComplete(doneResult)} />
+        )}
+
+        {/* 입력 영역 */}
+        {!doneResult && (
+          <div className="flex gap-2 items-center shrink-0">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
+              placeholder="여기에 입력하세요..."
+              disabled={loading}
+              className="flex-1 px-4 py-3 text-base font-bold bg-white focus:outline-none disabled:bg-gray-100"
+              style={{ border: "3px solid #000" }}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={loading || !input.trim()}
+              className="px-4 py-3 font-black text-black bg-yellow-300 disabled:opacity-40 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all shrink-0"
+              style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+            >
+              전송
+            </button>
+            <button
+              onClick={() => sendMessage("건너뛰기")}
+              disabled={loading}
+              className="px-4 py-3 font-black text-black bg-white disabled:opacity-40 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all shrink-0"
+              style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+            >
+              건너뛰기
+            </button>
+            {!autoMode ? (
+              <button
+                onClick={() => setAutoMode(true)}
+                disabled={loading}
+                className="px-4 py-3 font-black text-black bg-white disabled:opacity-40 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all shrink-0"
+                style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+              >
+                ✏️ 연습
+              </button>
+            ) : (
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleAuto("찬성")}
+                  disabled={loading}
+                  className="px-3 py-3 font-black text-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+                  style={{ background: "#3b82f6", border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+                >찬성</button>
+                <button
+                  onClick={() => handleAuto("반대")}
+                  disabled={loading}
+                  className="px-3 py-3 font-black text-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+                  style={{ background: "#ef4444", border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+                >반대</button>
+                <button
+                  onClick={() => setAutoMode(false)}
+                  disabled={loading}
+                  className="px-3 py-3 font-black text-black bg-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+                  style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+                >✕</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* 데스크톱 전용 사이드바 */}
+      {/* 데스크톱 사이드바 */}
       <div className="hidden md:block self-start sticky top-4">
         <SourceGuideCard />
       </div>
@@ -234,29 +218,34 @@ export default function PrepStage({ topic, onComplete }: PrepStageProps) {
   );
 }
 
-/* ── 말풍선 ──────────────────────────────────────────────────────────────── */
 function ChatBubble({ role, text }: { role: "student" | "ai"; text: string }) {
   const isStudent = role === "student";
   return (
     <div className={`flex ${isStudent ? "justify-end" : "justify-start"}`}>
       {!isStudent && (
-        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center
-                        text-blue-600 font-bold text-sm mr-2 mt-1 shrink-0">
+        <div
+          className="w-8 h-8 flex items-center justify-center font-black text-sm mr-2 mt-1 shrink-0 bg-yellow-300"
+          style={{ border: "2px solid #000" }}
+        >
           AI
         </div>
       )}
       <div
-        className={`max-w-[78%] rounded-2xl px-4 py-3 text-base leading-relaxed shadow-sm
-          ${isStudent
-            ? "bg-blue-500 text-white rounded-br-sm"
-            : "bg-gray-100 text-gray-800 rounded-bl-sm"
-          }`}
+        className="max-w-[78%] px-4 py-3 text-base font-bold leading-relaxed"
+        style={{
+          background: isStudent ? "#3b82f6" : "#f3f4f6",
+          color: isStudent ? "#fff" : "#000",
+          border: "2px solid #000",
+          boxShadow: "3px 3px 0px #000",
+        }}
       >
         {text}
       </div>
       {isStudent && (
-        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center
-                        text-white font-bold text-sm ml-2 mt-1 shrink-0">
+        <div
+          className="w-8 h-8 flex items-center justify-center font-black text-sm text-white ml-2 mt-1 shrink-0"
+          style={{ background: "#3b82f6", border: "2px solid #000" }}
+        >
           나
         </div>
       )}
@@ -264,52 +253,44 @@ function ChatBubble({ role, text }: { role: "student" | "ai"; text: string }) {
   );
 }
 
-/* ── 준비 완료 결과 카드 ─────────────────────────────────────────────────── */
-function PrepResultCard({
-  result,
-  onStart,
-}: {
-  result: PrepResult;
-  onStart: () => void;
-}) {
-  const stanceColor =
-    result.stance === "찬성"
-      ? "bg-blue-500 text-white"
-      : result.stance === "반대"
-      ? "bg-red-500 text-white"
-      : "bg-gray-400 text-white";
+function PrepResultCard({ result, onStart }: { result: PrepResult; onStart: () => void }) {
+  const stanceBg = result.stance === "찬성" ? "#3b82f6" : result.stance === "반대" ? "#ef4444" : "#6b7280";
 
   return (
-    <div className="rounded-2xl border-2 border-green-300 bg-green-50 px-5 py-4 shadow shrink-0">
+    <div
+      className="px-5 py-4 shrink-0 bg-white"
+      style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+    >
       <div className="flex items-center justify-between mb-3">
-        <p className="text-green-700 font-bold text-base">✅ 준비 완료!</p>
-        <Badge className={`text-sm px-3 py-1 rounded-full ${stanceColor}`}>
+        <p className="font-black text-black text-base">✅ 준비 완료!</p>
+        <span
+          className="text-sm px-3 py-1 font-black text-white"
+          style={{ background: stanceBg, border: "2px solid #000" }}
+        >
           {result.stance || "입장 미정"}
-        </Badge>
+        </span>
       </div>
-
-      <ul className="text-sm text-gray-700 space-y-1 mb-4">
+      <ul className="text-sm font-bold text-gray-700 space-y-1 mb-4">
         {result.grounds.map((g, i) => (
           <li key={i} className="flex gap-2">
-            <span className="font-semibold text-blue-600 shrink-0">근거 {i + 1}</span>
+            <span className="font-black text-blue-600 shrink-0">근거 {i + 1}</span>
             <span>{g || "—"}</span>
           </li>
         ))}
         {result.sources.map((s, i) => (
           <li key={`s${i}`} className="flex gap-2 text-gray-400">
-            <span className="font-semibold shrink-0">자료 {i + 1}</span>
+            <span className="font-black shrink-0">자료 {i + 1}</span>
             <span>{s || "(없음)"}</span>
           </li>
         ))}
       </ul>
-
-      <Button
+      <button
         onClick={onStart}
-        className="w-full rounded-2xl py-3 text-base font-bold bg-green-500
-                   hover:bg-green-600 h-auto"
+        className="w-full py-3 font-black text-black text-base active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+        style={{ background: "#faff00", border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
       >
         🗣️ 토론 시작하기
-      </Button>
+      </button>
     </div>
   );
 }

@@ -11,41 +11,37 @@ export default function HomeButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-3 left-3 z-40 flex items-center gap-1.5
-                   rounded-xl border border-gray-200 bg-white/90 backdrop-blur
-                   px-3 py-1.5 text-sm font-semibold text-gray-700
-                   shadow-sm hover:bg-gray-50 transition-colors"
+        className="fixed top-3 left-3 z-40 flex items-center gap-1.5 px-3 py-1.5 font-black text-sm bg-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+        style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
       >
         🏠 홈
       </button>
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.5)" }}
           onClick={() => setOpen(false)}
         >
           <div
-            className="mx-4 w-full max-w-sm rounded-2xl bg-white shadow-xl p-6 flex flex-col gap-4"
+            className="mx-4 w-full max-w-sm bg-white p-6 flex flex-col gap-4"
+            style={{ border: "3px solid #000", boxShadow: "6px 6px 0px #000" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-base font-bold text-gray-800">
-              ⚠️ 홈으로 돌아가시겠어요?
-            </p>
-            <p className="text-sm text-gray-500">
-              현재 토론 내용이 모두 삭제됩니다.
-            </p>
+            <p className="text-base font-black text-black">⚠️ 홈으로 돌아가시겠어요?</p>
+            <p className="text-sm font-bold text-gray-600">현재 토론 내용이 모두 삭제됩니다.</p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold
-                           text-gray-600 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-black bg-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+                style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
               >
                 취소
               </button>
               <button
                 onClick={() => router.push("/")}
-                className="rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold
-                           text-white hover:bg-red-600 transition-colors"
+                className="px-4 py-2 text-sm font-black text-white active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+                style={{ background: "#ff4444", border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
               >
                 홈으로 가기
               </button>

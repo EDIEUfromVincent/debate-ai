@@ -33,83 +33,94 @@ export default function Home() {
     const t = topic.trim();
     if (!t) return;
     setLoading(true);
-    // 세션 파라미터를 URL query로 넘겨 SessionContainer에서 소비
     router.push(`/session/new?topic=${encodeURIComponent(t)}&mode=${mode}`);
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg flex flex-col gap-6">
+    <main
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
+      style={{ background: "#A8F0E0" }}
+    >
+      <div className="w-full max-w-lg flex flex-col gap-5">
 
         {/* 타이틀 */}
-        <div className="text-center mb-2">
-          <p className="text-3xl font-extrabold text-gray-800 mb-1">토론 수업 AI</p>
-          <p className="text-sm text-gray-400">주제를 고르고 토론을 시작해 보세요</p>
+        <div
+          className="text-center py-6 px-6"
+          style={{ border: "3px solid #000", boxShadow: "6px 6px 0px #000", background: "#fff" }}
+        >
+          <p className="text-4xl font-black text-black mb-1">🗣️ 토론 수업 AI</p>
+          <p className="text-sm font-bold text-gray-600">주제를 고르고 토론을 시작해 보세요</p>
         </div>
 
         {/* 주제 입력 */}
-        <div className="rounded-2xl bg-white border shadow-sm p-5 flex flex-col gap-3">
-          <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">토론 주제</p>
+        <div
+          className="bg-white p-5 flex flex-col gap-3"
+          style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+        >
+          <p className="text-xs font-black text-black uppercase tracking-widest">📝 토론 주제</p>
           <textarea
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder="직접 주제를 입력하세요..."
             rows={2}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-base
-                       focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+            className="w-full px-4 py-3 text-base font-bold resize-none focus:outline-none"
+            style={{ border: "3px solid #000" }}
           />
-          <div className="flex flex-col gap-1.5">
-            <p className="text-xs text-gray-400 font-semibold">예시 주제 선택</p>
-            <div className="flex flex-col gap-1">
-              {SAMPLE_TOPICS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTopic(t)}
-                  className={`text-left text-sm px-3 py-2 rounded-xl border transition-colors
-                    ${topic === t
-                      ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold"
-                      : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-blue-50 hover:border-blue-300"}`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+          <p className="text-xs font-black text-black uppercase tracking-widest mt-1">💡 예시 주제</p>
+          <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+            {SAMPLE_TOPICS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTopic(t)}
+                className={`text-left text-sm px-3 py-2 font-bold transition-all active:translate-x-0.5 active:translate-y-0.5
+                  ${topic === t
+                    ? "bg-yellow-300 shadow-none translate-x-0.5 translate-y-0.5"
+                    : "bg-white hover:bg-yellow-100 shadow-[2px_2px_0px_#000]"}`}
+                style={{ border: "2px solid #000" }}
+              >
+                {t}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* 모드 선택 */}
-        <div className="rounded-2xl bg-white border shadow-sm p-5 flex flex-col gap-3">
-          <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">토론 방식</p>
+        <div
+          className="bg-white p-5 flex flex-col gap-3"
+          style={{ border: "3px solid #000", boxShadow: "4px 4px 0px #000" }}
+        >
+          <p className="text-xs font-black text-black uppercase tracking-widest">⚙️ 토론 방식</p>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setMode("ai")}
-              className={`rounded-xl border-2 p-4 text-left transition-all
+              className={`p-4 text-left font-black transition-all active:translate-x-1 active:translate-y-1
                 ${mode === "ai"
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 bg-gray-50 hover:border-blue-300"}`}
+                  ? "bg-yellow-300 shadow-none translate-x-1 translate-y-1"
+                  : "bg-white shadow-[4px_4px_0px_#000] hover:bg-yellow-100"}`}
+              style={{ border: "3px solid #000" }}
             >
-              <p className="text-lg mb-1">🤖</p>
-              <p className={`font-bold text-sm ${mode === "ai" ? "text-blue-700" : "text-gray-700"}`}>
-                1 : AI
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">AI와 1대1 토론</p>
+              <p className="text-2xl mb-1">🤖</p>
+              <p className="font-black text-sm text-black">1 : AI</p>
+              <p className="text-xs font-bold text-gray-500 mt-0.5">AI와 1대1 토론</p>
             </button>
             <button
               onClick={() => setMode("1v1")}
-              className={`rounded-xl border-2 p-4 text-left transition-all
+              className={`p-4 text-left font-black transition-all active:translate-x-1 active:translate-y-1
                 ${mode === "1v1"
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-gray-200 bg-gray-50 hover:border-purple-300"}`}
+                  ? "bg-purple-300 shadow-none translate-x-1 translate-y-1"
+                  : "bg-white shadow-[4px_4px_0px_#000] hover:bg-purple-100"}`}
+              style={{ border: "3px solid #000" }}
             >
-              <p className="text-lg mb-1">👥</p>
-              <p className={`font-bold text-sm ${mode === "1v1" ? "text-purple-700" : "text-gray-700"}`}>
-                1 : 1
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">친구와 함께 토론</p>
+              <p className="text-2xl mb-1">👥</p>
+              <p className="font-black text-sm text-black">1 : 1</p>
+              <p className="text-xs font-bold text-gray-500 mt-0.5">친구와 함께 토론</p>
             </button>
           </div>
           {mode === "1v1" && (
-            <p className="text-xs text-purple-500 bg-purple-50 rounded-xl px-3 py-2">
+            <p
+              className="text-xs font-bold px-3 py-2"
+              style={{ background: "#e9d5ff", border: "2px solid #000" }}
+            >
               각자 기기에서 QR 코드로 접속하는 방식입니다.
             </p>
           )}
@@ -119,8 +130,15 @@ export default function Home() {
         <button
           onClick={handleStart}
           disabled={!topic.trim() || loading}
-          className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40
-                     py-4 text-white font-extrabold text-base transition-colors"
+          className={`w-full py-4 text-black font-black text-lg transition-all
+            ${!topic.trim() || loading
+              ? "opacity-40 cursor-not-allowed"
+              : "active:shadow-none active:translate-x-1 active:translate-y-1"}`}
+          style={{
+            background: "#faff00",
+            border: "3px solid #000",
+            boxShadow: (!topic.trim() || loading) ? "none" : "4px 4px 0px #000",
+          }}
         >
           {loading ? "세션 생성 중..." : "토론 시작 →"}
         </button>
