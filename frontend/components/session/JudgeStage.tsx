@@ -142,12 +142,16 @@ export default function JudgeStage({ result, topic, studentSide, onRestart }: Ju
           <p className="text-xs font-black text-black uppercase tracking-widest mb-2">총점 (12점 만점)</p>
           <div className="flex items-center gap-3">
             <span className="font-black w-6 text-right" style={{ color: "#3b82f6" }}>{pro_score.total}</span>
-            <div
-              className="flex-1 overflow-hidden"
-              style={{ height: 20, background: "#e5e7eb", border: "2px solid #000", display: "flex" }}
-            >
-              <div style={{ width: `${(pro_score.total / 12) * 100}%`, background: "#3b82f6", height: "100%" }} />
-              <div style={{ width: `${(con_score.total / 12) * 100}%`, background: "#ef4444", height: "100%" }} />
+            <div className="flex-1" style={{ height: 20, border: "2px solid #000", display: "flex" }}>
+              {/* 찬성: 중앙→왼쪽 */}
+              <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", background: "#e5e7eb" }}>
+                <div style={{ width: `${(pro_score.total / 12) * 100}%`, background: "#3b82f6", height: "100%" }} />
+              </div>
+              <div style={{ width: 2, background: "#000" }} />
+              {/* 반대: 중앙→오른쪽 */}
+              <div style={{ flex: 1, background: "#e5e7eb" }}>
+                <div style={{ width: `${(con_score.total / 12) * 100}%`, background: "#ef4444", height: "100%" }} />
+              </div>
             </div>
             <span className="font-black w-6" style={{ color: "#ef4444" }}>{con_score.total}</span>
           </div>
