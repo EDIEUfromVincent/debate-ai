@@ -8,7 +8,7 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any
 
-from llm.gemini_client import generate
+from llm.gemini_client import generate, agenerate
 
 
 class AgentBase(ABC):
@@ -59,6 +59,29 @@ class AgentBase(ABC):
         contents.append({"role": "user", "parts": [{"text": user_message}]})
 
         raw = generate(
+            model=self.model,
+            system_instruction=system_override if system_override is not None else self._system_prompt,
+            contents=contents,
+            response_schema=self.response_schema,
+            max_output_tokens=self.max_tokens,
+            temperature=self.temperature,
+            thinking_budget=self.thinking_budget,
+        )
+
+        if self.response_schema is not None:
+            return json.loads(raw)
+        return raw
+
+    async def acall(
+        self,
+        user_message: str,
+        history: list[dict[str, Any]] | None = None,
+        system_override: str | None = None,
+    ) -> str | dict[str, Any]:
+        contents = list(history or [])
+        contents.append({"role": "user", "parts": [{"text": user_message}]})
+
+        raw = await agenerate(
             model=self.model,
             system_instruction=system_override if system_override is not None else self._system_prompt,
             contents=contents,

@@ -107,7 +107,7 @@ def _safe_duration(sess: SessionState) -> int | None:
 
 
 # ── AI 자동 발화 ──────────────────────────────────────────────────────────────
-def _run_ai_turns(sess: SessionState) -> list[dict[str, Any]]:
+async def _run_ai_turns(sess: SessionState) -> list[dict[str, Any]]:
     """
     AI Opponent 발화가 필요하면 생성 후 pending_transition=True로 멈춘다.
     협의 단계와 JUDGING은 즉시 자동 처리.
@@ -118,7 +118,7 @@ def _run_ai_turns(sess: SessionState) -> list[dict[str, Any]]:
         state = sess.sm.current
 
         if state == State.JUDGING:
-            result = _judge.evaluate(sess.topic, sess.turns, sess.events)
+            result = await _judge.aevaluate(sess.topic, sess.turns, sess.events)
             sess.judge_result = result
             sess.sm.send(Event.COMPLETE)   # → report_generation
             sess.sm.send(Event.COMPLETE)   # → ended
@@ -129,7 +129,7 @@ def _run_ai_turns(sess: SessionState) -> list[dict[str, Any]]:
             break
 
         if _is_ai_opponent_turn(sess):
-            text = sess.opponent.speak(
+            text = await sess.opponent.aspeak(
                 phase_id=_phase_id(sess),
                 student_side=sess.student_side,
                 topic=sess.topic,
@@ -149,10 +149,10 @@ def _run_ai_turns(sess: SessionState) -> list[dict[str, Any]]:
             break
 
         if state in _CONSULTATION:
-            mc_msg = _mc.announce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
+            mc_msg = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
             messages.append({"type": "mc", "text": mc_msg, "phase": _phase_id(sess)})
             sess.sm.send(Event.TIMEOUT)
-            mc_next = _mc.announce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
+            mc_next = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
             messages.append({"type": "mc", "text": mc_next, "phase": _phase_id(sess)})
             continue  # 협의 후 다음 phase(AI 반론 등) 즉시 처리
 
@@ -233,7 +233,7 @@ async def debate_start(req: StartRequest) -> StartResponse:
     _sessions[session_id] = sess
 
     sess.sm.send(Event.START)
-    mc_msg = _mc.announce(MCEvent.PHASE_START, phase_id="orientation")
+    mc_msg = await _mc.aannounce(MCEvent.PHASE_START, phase_id="orientation")
 
     return StartResponse(
         session_id=session_id,
@@ -263,12 +263,12 @@ async def debate_turn(req: TurnRequest) -> TurnResponse:
 
     # 1. Moderation
     grounds_so_far = [t["text"] for t in sess.turns if t["speaker"] == acting_side]
-    mod_result = _moderation.check(req.student_input, phase, grounds_so_far)
+    mod_result = await _moderation.acheck(req.student_input, phase, grounds_so_far)
     violations  = mod_result.get("violations", [])
     mc_warning: str | None = None
     for v in violations:
         sess.add_event(v["type"], phase, sess.student_side, v.get("severity", "medium"))
-        mc_warning = _mc.announce(MCEvent.VIOLATION, phase_id=phase, violation_type=v["type"])
+        mc_warning = await _mc.aannounce(MCEvent.VIOLATION, phase_id=phase, violation_type=v["type"])
 
     # 2. 학생 발화 기록 + state 전이
     sess.add_turn(phase, acting_side, req.student_input)
@@ -283,7 +283,7 @@ async def debate_turn(req: TurnRequest) -> TurnResponse:
     # 4. MC 안내 (pending 없을 때만)
     mc_next: str | None = mc_warning
     if not mc_warning and not sess.sm.is_finished() and not sess.pending_transition:
-        mc_next = _mc.announce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
+        mc_next = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
 
     return _build_turn_response(sess, violations, mc_next, ai_messages)
 
@@ -309,7 +309,7 @@ async def debate_ack(req: AckRequest) -> TurnResponse:
 
     mc_next: str | None = None
     if not sess.sm.is_finished() and not sess.pending_transition:
-        mc_next = _mc.announce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
+        mc_next = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
 
     return _build_turn_response(sess, [], mc_next, ai_messages)
 
@@ -338,7 +338,7 @@ async def debate_timeout(req: TimeoutRequest) -> TurnResponse:
     ai_messages = _run_ai_turns(sess)
     mc_next: str | None = None
     if not sess.sm.is_finished() and not sess.pending_transition:
-        mc_next = _mc.announce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
+        mc_next = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
 
     return _build_turn_response(sess, [], mc_next, ai_messages, False)
 
@@ -369,7 +369,7 @@ async def debate_skip_rebuttal(req: SkipRequest) -> TurnResponse:
     ai_messages = _run_ai_turns(sess)
     mc_next: str | None = None
     if not sess.sm.is_finished() and not sess.pending_transition:
-        mc_next = _mc.announce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
+        mc_next = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
 
     return _build_turn_response(sess, [], mc_next, ai_messages)
 

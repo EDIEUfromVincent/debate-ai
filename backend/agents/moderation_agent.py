@@ -74,3 +74,24 @@ class ModerationAgent(AgentBase):
         result = self.call(prompt)
         assert isinstance(result, dict)
         return result
+
+    async def acheck(
+        self,
+        text: str,
+        phase_id: str,
+        existing_grounds: list[str] | None = None,
+    ) -> dict[str, Any]:
+        is_phase3 = "phase_3" in phase_id
+        grounds_str = ""
+        if is_phase3 and existing_grounds:
+            grounds_str = "\n기존 근거 목록:\n" + "\n".join(f"- {g}" for g in existing_grounds)
+
+        prompt = (
+            f"현재 단계: {phase_id}\n"
+            f"발화: {text}"
+            f"{grounds_str}\n\n"
+            "위반 여부를 탐지하고 JSON을 반환하세요."
+        )
+        result = await self.acall(prompt)
+        assert isinstance(result, dict)
+        return result

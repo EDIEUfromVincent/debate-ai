@@ -139,3 +139,30 @@ class JudgeAgent(AgentBase):
         result = self.call(prompt)
         assert isinstance(result, dict)
         return result
+
+    async def aevaluate(
+        self,
+        topic: str,
+        turns: list[dict[str, Any]],
+        events: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        turns_text = "\n".join(
+            f"[{t['phase']}] {t['speaker']}: {t['text']}" for t in turns
+        )
+        events_text = ""
+        if events:
+            events_text = "\n[탐지된 위반 이벤트]\n" + "\n".join(
+                f"  - {e['type']} / {e.get('phase','')} / {e.get('side','')}"
+                for e in events
+            )
+
+        prompt = (
+            f"토론 주제: {topic}\n\n"
+            f"[전체 발화 로그]\n{turns_text}"
+            f"{events_text}\n\n"
+            "위 세션 전체를 4축 루브릭으로 채점하고 JSON을 반환하세요."
+        )
+
+        result = await self.acall(prompt)
+        assert isinstance(result, dict)
+        return result

@@ -118,3 +118,56 @@ class MCAgent(AgentBase):
             prompt = "다음 단계로 진행합니다."
 
         return str(self.call(prompt))
+
+    async def aannounce(
+        self,
+        event: MCEvent,
+        phase_id: str = "",
+        violation_type: str = "",
+    ) -> str:
+        meta = _PHASE_META.get(phase_id, {})
+        phase_name = meta.get("name", phase_id)
+        speaker = meta.get("speaker", "")
+
+        if event == MCEvent.PHASE_START:
+            if "consultation" in phase_id:
+                prompt = (
+                    f"[{phase_name}] 단계입니다. "
+                    "각자 잠깐 생각을 정리하는 시간이에요. "
+                    "'팀', '여러분', '먼저 찬성부터' 같은 말 절대 쓰지 마세요. "
+                    "1문장으로만 안내하세요."
+                )
+            else:
+                prompt = (
+                    f"다음 단계 안내: [{phase_name}] — {speaker} 차례. "
+                    "시간 제한 언급하지 말고, 화자와 단계만 안내하는 메시지를 1~2문장으로 말하세요."
+                )
+        elif event == MCEvent.NO_RESPONSE:
+            prompt = (
+                "학생이 10초간 응답하지 않았습니다. "
+                "부드럽게 격려하며 나중에 답변해도 된다고 안내하는 메시지를 1~2문장으로 말하세요."
+            )
+        elif event == MCEvent.VIOLATION:
+            vtype_kor = {
+                "insult": "거친말·비방",
+                "off_topic": "주제 이탈",
+                "new_evidence": "새 근거 투입",
+            }.get(violation_type, violation_type)
+            prompt = (
+                f"규칙 위반 감지: [{vtype_kor}]. "
+                "건조하고 단호하게 경고하는 메시지를 1~2문장으로 말하세요."
+            )
+        elif event == MCEvent.OVERRUN:
+            prompt = (
+                f"[{phase_name}] 발언 시간이 초과되었습니다. "
+                "시간 종료를 알리고 다음 단계로 넘어감을 안내하는 메시지를 1~2문장으로 말하세요."
+            )
+        elif event == MCEvent.EARLY_COMPLETE:
+            prompt = (
+                "학생이 발언을 일찍 마쳤습니다. "
+                "더 할 말이 없는지 확인하고 다음 단계로 넘어가는 메시지를 1~2문장으로 말하세요."
+            )
+        else:
+            prompt = "다음 단계로 진행합니다."
+
+        return str(await self.acall(prompt))

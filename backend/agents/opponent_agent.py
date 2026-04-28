@@ -136,6 +136,30 @@ class OpponentAgent(AgentBase):
         )
         return str(self.call(instruction, system_override=system))
 
+    async def aspeak(
+        self,
+        phase_id: str,
+        student_side: str,
+        topic: str,
+        all_turns: list[dict],
+    ) -> str | None:
+        role_info = determine_ai_role(phase_id, student_side)
+        if not role_info["speak"]:
+            return None
+
+        role = role_info["role"]
+        ref_text = ""
+        if role_info["reference_phase"]:
+            ref_text = self._find_utterance(all_turns, role_info["reference_phase"])
+
+        system = _BASE.format(stance=self._stance, difficulty=self._difficulty)
+        instruction = _ROLE_PROMPTS[role].format(
+            topic=topic,
+            stance=self._stance,
+            reference_utterance=ref_text or "(참조 발화 없음)",
+        )
+        return str(await self.acall(instruction, system_override=system))
+
     def _find_utterance(self, turns: list[dict], phase_id: str) -> str:
         for t in turns:
             if t.get("phase") == phase_id:
