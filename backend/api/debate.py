@@ -278,7 +278,7 @@ async def debate_turn(req: TurnRequest) -> TurnResponse:
         pass
 
     # 3. AI 자동 처리
-    ai_messages = _run_ai_turns(sess)
+    ai_messages = await _run_ai_turns(sess)
 
     # 4. MC 안내 (pending 없을 때만)
     mc_next: str | None = mc_warning
@@ -305,7 +305,7 @@ async def debate_ack(req: AckRequest) -> TurnResponse:
         pass
 
     # 전이 후 또 AI 차례면 재귀적으로 처리
-    ai_messages = _run_ai_turns(sess)
+    ai_messages = await _run_ai_turns(sess)
 
     mc_next: str | None = None
     if not sess.sm.is_finished() and not sess.pending_transition:
@@ -335,7 +335,7 @@ async def debate_timeout(req: TimeoutRequest) -> TurnResponse:
     except InvalidTransitionError:
         pass
 
-    ai_messages = _run_ai_turns(sess)
+    ai_messages = await _run_ai_turns(sess)
     mc_next: str | None = None
     if not sess.sm.is_finished() and not sess.pending_transition:
         mc_next = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
@@ -366,7 +366,7 @@ async def debate_skip_rebuttal(req: SkipRequest) -> TurnResponse:
     except InvalidTransitionError:
         raise HTTPException(status_code=400, detail="Cannot skip from current state")
 
-    ai_messages = _run_ai_turns(sess)
+    ai_messages = await _run_ai_turns(sess)
     mc_next: str | None = None
     if not sess.sm.is_finished() and not sess.pending_transition:
         mc_next = await _mc.aannounce(MCEvent.PHASE_START, phase_id=_phase_id(sess))
